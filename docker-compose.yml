@@ -60,7 +60,7 @@ services:
       WORDPRESS_DB_PASSWORD: '${DATABASE_PASSWORD}'
     volumes:
       - wordpress:/var/www/html
-      - ./src:/var/www/html/wp-content/plugins/demo:rw
+      - ./wp-content:/var/www/html/wp-content:rw
     networks:
       - internal
 
