@@ -15,14 +15,27 @@ if (!class_exists('DemoPlugin')) {
             add_action('rest_api_init', array($this, 'register_routes'));
         }
 
-        function hello_world() {
-            return rest_ensure_response('Hello World!');
+        function post_orgs($request) {
+            $this->add_orgs($request->get_json_params());
+        }
+
+        function add_orgs($parent) {
+            global $wpdb;
+            $parent_name = $parent['org_name'];
+            $wpdb->insert($wpdb->prefix . 'organisations', array('orgname' => $parent_name));
+            if (array_key_exists('daughters', $parent)) {
+                foreach ($parent['daughters'] as $daughter) {
+                    $daughter_name = $daughter['org_name'];
+                    $wpdb->insert($wpdb->prefix . 'relations', array('parent' => $parent_name, 'child' => $daughter_name));
+                    $this->add_orgs($daughter);
+                }
+            }
         }
 
         function register_routes() {
-            register_rest_route('hello-world/v1', '/hello', array(
-                'methods'  => WP_REST_Server::READABLE,
-                'callback' => array($this, 'hello_world'),
+            register_rest_route('demo/v1', '/organisations', array(
+                'methods'  => WP_REST_Server::CREATABLE,
+                'callback' => array($this, 'post_orgs'),
             ));
         }
 
@@ -34,14 +47,14 @@ if (!class_exists('DemoPlugin')) {
             $orgs_sql = "CREATE TABLE $orgs_name (
               id int NOT NULL AUTO_INCREMENT,
               orgname varchar(255) NOT NULL,
-              PRIMARY KEY  (id)
+              PRIMARY KEY  (orgname)
             ) $charset_collate;";
 
             $relations_name = $wpdb->prefix . 'relations';
             $relations_sql = "CREATE TABLE $relations_name (
               id int NOT NULL AUTO_INCREMENT,
-              parent int NOT NULL,
-              child  int NOT NULL,
+              parent varchar(255) NOT NULL,
+              child  varchar(255) NOT NULL,
               PRIMARY KEY  (id)
             ) $charset_collate;";
 
