@@ -3,20 +3,34 @@
 namespace Demo\REST_API;
 
 class Organisations {
-    static function post_orgs($request) {
-        Organisations::add_orgs($request->get_json_params());
+    static function post($request) {
+        self::add_orgs($request->get_json_params(), null);
     }
 
-    static function add_orgs($parent) {
+    static function add_orgs($arr, $parent_name) {
         global $wpdb;
-        $parent_name = $parent['org_name'];
-        $wpdb->insert($wpdb->prefix . 'demo_organisations', array('orgname' => $parent_name));
-        if (array_key_exists('daughters', $parent)) {
-            foreach ($parent['daughters'] as $daughter) {
-                $daughter_name = $daughter['org_name'];
-                $wpdb->insert($wpdb->prefix . 'demo_relations', array('parent' => $parent_name, 'child' => $daughter_name));
-                Organisations::add_orgs($daughter);
+        $org_name = $arr['org_name'];
+        $org_id = self::get_org_id($org_name);
+        if (!self::get_org_id($org_name)) {
+            $wpdb->insert($wpdb->prefix . 'demo_organisations', array('orgname' => $org_name));
+            $org_id = $wpdb->insert_id;
+        }
+        if ($parent_name) {
+            $parent_id = self::get_org_id($parent_name);
+            if ($parent_id) {
+                $wpdb->insert($wpdb->prefix . 'demo_relations', array('parent' => $parent_id, 'child' => $org_id));
             }
         }
+        if (array_key_exists('daughters', $arr)) {
+            foreach ($arr['daughters'] as $daughter_arr) {
+                self::add_orgs($daughter_arr, $org_name);
+            }
+        }
+    }
+
+    static function get_org_id($org_name) {
+        global $wpdb;
+        $orgs_table = $wpdb->prefix . 'demo_organisations';
+        return $wpdb->get_var("SELECT id FROM $orgs_table WHERE orgname = '$org_name'");
     }
 }
