@@ -11,7 +11,9 @@ if (!defined('ABSPATH')) {
 class DemoPlugin {
     public function __construct() {
         require_once plugin_dir_path( __FILE__ ) . 'includes/class-demo-activator.php';
+        require_once plugin_dir_path( __FILE__ ) . 'includes/class-demo-deactivator.php';
         register_activation_hook(__FILE__, array('Demo\Activator', 'activate'));
+        register_deactivation_hook(__FILE__, array('Demo\DeActivator', 'de_activate'));
         add_action('rest_api_init', array($this, 'register_routes'));
     }
 
