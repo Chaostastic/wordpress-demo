@@ -23,6 +23,17 @@ class Organisations {
         return rest_ensure_response($response_arr);
     }
 
+    static function delete($request) {
+        $org_name = (string) $request['org_name'];
+        $org_id = self::get_org_id($org_name);
+        if (!$org_id) {
+            return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
+        }
+        self::remove_org($org_id);
+        self::remove_relations($org_id);
+        return rest_ensure_response("Deletion Successful");
+    }
+
     static function post($request) {
         self::add_orgs($request->get_json_params(), null);
     }
@@ -89,6 +100,21 @@ class Organisations {
             FROM $relations_table
             INNER JOIN $orgs_table ON $relations_table.child=$orgs_table.id
             WHERE parent IN (SELECT parent FROM $relations_table WHERE child = '$org_id') AND NOT child = '$org_id'; 
+        ");
+    }
+
+    static function remove_org($org_id) {
+        global $wpdb;
+        $orgs_table = $wpdb->prefix . 'demo_organisations';
+        $wpdb->delete($orgs_table, array('id' => $org_id));
+    }
+
+    static function remove_relations($org_id) {
+        global $wpdb;
+        $relations_table = $wpdb->prefix . 'demo_relations';
+        $wpdb->query("
+            DELETE FROM $relations_table
+            WHERE parent = $org_id OR child = $org_id
         ");
     }
 }
