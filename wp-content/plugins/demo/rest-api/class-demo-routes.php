@@ -8,7 +8,11 @@ class Routes {
 
         register_rest_route('demo/v1', '/organisations', array(
             'methods'  => WP_REST_Server::CREATABLE,
-            'callback' => array('Demo\REST_API\Organisations', 'post'),
+            'callback' => array('Demo\REST_API\Organisations', 'post')
+        ));
+        register_rest_route('demo/v1', '/organisations/(?P<org_name>.+)', array(
+            'methods'  => WP_REST_Server::READABLE,
+            'callback' => array('Demo\REST_API\Organisations', 'get')
         ));
     }
 }
