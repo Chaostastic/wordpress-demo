@@ -18,6 +18,10 @@ class Routes {
             array(
                 'methods'  => WP_REST_Server::DELETABLE,
                 'callback' => array('Demo\REST_API\Organisations', 'delete')
+            ),
+            array(
+                'methods'  => 'PUT',
+                'callback' => array('Demo\REST_API\Organisations', 'put')
             )
         ));
     }

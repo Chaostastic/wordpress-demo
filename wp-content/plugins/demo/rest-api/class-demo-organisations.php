@@ -34,20 +34,28 @@ class Organisations {
         return rest_ensure_response("Deletion Successful");
     }
 
+    static function put($request) {
+        $org_name = (string) $request['org_name'];
+        $org_id = self::get_org_id($org_name);
+        if (!$org_id) {
+            return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
+        }
+        self::remove_relations($org_id);
+        return rest_ensure_response("Edit Successful");
+    }
+
     static function post($request) {
         self::add_orgs($request->get_json_params(), null);
     }
 
     static function add_orgs($arr, $parent_id) {
-        global $wpdb;
         $org_name = $arr['org_name'];
         $org_id = self::get_org_id($org_name);
         if (!$org_id) {
-            $wpdb->insert($wpdb->prefix . 'demo_organisations', array('orgname' => $org_name));
-            $org_id = $wpdb->insert_id;
+            $org_id = self::add_org($org_name);
         }
         if ($parent_id) {
-            $wpdb->insert($wpdb->prefix . 'demo_relations', array('parent' => $parent_id, 'child' => $org_id));
+            self::add_relation($parent_id, $org_id);
         }
         if (array_key_exists('daughters', $arr)) {
             foreach ($arr['daughters'] as $daughter_arr) {
@@ -56,15 +64,26 @@ class Organisations {
         }
     }
 
+    static function sort_by_org_name($a, $b) {
+        if ($a['org_name'] == $b['org_name']) return 0;
+        return ($a['org_name'] < $b['org_name']) ? -1 : 1;
+    }
+
+    static function add_org($org_name) {
+        global $wpdb;
+        $wpdb->insert($wpdb->prefix . 'demo_organisations', array('orgname' => $org_name));
+        return $wpdb->insert_id;
+    }
+
+    static function add_relation($parent_id, $org_id) {
+        global $wpdb;
+        $wpdb->insert($wpdb->prefix . 'demo_relations', array('parent' => $parent_id, 'child' => $org_id));
+    }
+
     static function get_org_id($org_name) {
         global $wpdb;
         $orgs_table = $wpdb->prefix . 'demo_organisations';
         return $wpdb->get_var("SELECT id FROM $orgs_table WHERE orgname = '$org_name'");
-    }
-
-    static function sort_by_org_name($a, $b) {
-        if ($a['org_name'] == $b['org_name']) return 0;
-        return ($a['org_name'] < $b['org_name']) ? -1 : 1;
     }
 
     static function get_parents($org_id) {
