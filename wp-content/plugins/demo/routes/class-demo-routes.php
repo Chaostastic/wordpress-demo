@@ -1,27 +1,29 @@
 <?php
-namespace Demo\REST_API;
+namespace Demo;
+use Demo\Controller\OrganisationsController;
+require_once DEMO_PLUGIN_DIR . 'controllers/class-demo-organisations-controller.php';
 use WP_REST_Server;
 
 class Routes {
-    static function register_routes() {
-        require_once plugin_dir_path( __FILE__ ) . 'class-demo-organisations.php';
+    function register_routes(): void {
+        $controller = new OrganisationsController();
 
         register_rest_route('demo/v1', '/organisations', array(
             'methods'  => WP_REST_Server::CREATABLE,
-            'callback' => array('Demo\REST_API\Organisations', 'post')
+            'callback' => array($controller, 'post')
         ));
         register_rest_route('demo/v1', '/organisations/(?P<org_name>.+)', array(
             array(
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => array('Demo\REST_API\Organisations', 'get')
+                'callback' => array($controller, 'get')
             ),
             array(
                 'methods'  => WP_REST_Server::DELETABLE,
-                'callback' => array('Demo\REST_API\Organisations', 'delete')
+                'callback' => array($controller, 'delete')
             ),
             array(
                 'methods'  => 'PUT',
-                'callback' => array('Demo\REST_API\Organisations', 'put')
+                'callback' => array($controller, 'put')
             )
         ));
     }

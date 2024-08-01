@@ -1,11 +1,12 @@
 <?php
-namespace Demo\REST_API;
-use Demo\Model\OrganisationsModel;
+namespace Demo\Controller;
+use Demo\Service\OrganisationsService;
+require_once DEMO_PLUGIN_DIR . 'services/class-demo-organisations-service.php';
 use WP_Error;
 
-class Organisations {
-    static function get($request) {
-        $model = new OrganisationsModel();
+class OrganisationsController {
+    function get($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
+        $model = new OrganisationsService();
         $org_name = (string) $request['org_name'];
         $org_id = $model->get_org_id($org_name);
         if (!$org_id) {
@@ -25,25 +26,24 @@ class Organisations {
         return rest_ensure_response($response_arr);
     }
 
-    static function sort_by_org_name($a, $b) {
+    function sort_by_org_name($a, $b): int {
         if ($a['org_name'] == $b['org_name']) return 0;
         return ($a['org_name'] < $b['org_name']) ? -1 : 1;
     }
 
-    static function delete($request) {
-        $model = new OrganisationsModel();
+    function delete($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
+        $model = new OrganisationsService();
         $org_name = (string) $request['org_name'];
         $org_id = $model->get_org_id($org_name);
         if (!$org_id) {
             return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
         }
         $model->remove_org($org_id);
-        $model->remove_relations($org_id);
         return rest_ensure_response("Deletion Successful");
     }
 
-    static function put($request) {
-        $model = new OrganisationsModel();
+    function put($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
+        $model = new OrganisationsService();
         $org_name = (string) $request['org_name'];
         $org_id = $model->get_org_id($org_name);
         if (!$org_id) {
@@ -53,12 +53,12 @@ class Organisations {
         return rest_ensure_response("Edit Successful");
     }
 
-    static function post($request) {
-        $model = new OrganisationsModel();
+    function post($request): void {
+        $model = new OrganisationsService();
         self::add_orgs($request->get_json_params(), null, $model);
     }
 
-    static function add_orgs($arr, $parent_id, $model) {
+    function add_orgs($arr, $parent_id, $model): void {
         $org_name = $arr['org_name'];
         $org_id = $model->get_org_id($org_name);
         if (!$org_id) {
