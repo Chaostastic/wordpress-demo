@@ -21,9 +21,17 @@ class OrganisationsController {
         array_push($response_arr, ...array_map(function ($org_name) {
             return ['relationship_type' => 'sister', 'org_name' => $org_name];
         }, $service->get_sisters($org_id)));
-        array_multisort($response_arr, SORT_ASC, $response_arr);
         usort($response_arr, self::sort_by_org_name(...));
-        return rest_ensure_response($response_arr);
+        $page = $request->get_param('page');
+        if (!$page) {
+            $page = 1;
+        }
+        $per_page = $request->get_param('limit');
+        if (!$per_page || $per_page > 100) {
+            $per_page = 100;
+        }
+        $start_index = ($page - 1) * $per_page;
+        return rest_ensure_response(array_slice($response_arr, $start_index, $per_page));
     }
 
     function sort_by_org_name($a, $b): int {
