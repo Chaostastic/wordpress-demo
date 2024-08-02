@@ -1,4 +1,4 @@
 .env
 .idea/
 wordpress/
-wp-content/themes/twentytwentyfour
+wp-content/plugins/demo/includes/acf
