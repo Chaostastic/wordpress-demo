@@ -4,7 +4,7 @@ use Demo\Service\OrganisationsService;
 require_once DEMO_PLUGIN_DIR . 'services/class-demo-organisations-service.php';
 
 class DeActivator {
-    static function deactivate(): void {
+    public function deactivate(): void {
         $model = new OrganisationsService();
         $model->drop_tables();
     }
