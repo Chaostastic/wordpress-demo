@@ -6,21 +6,21 @@ use WP_Error;
 
 class OrganisationsController {
     function get($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
-        $model = new OrganisationsService();
+        $service = new OrganisationsService();
         $org_name = (string) $request['org_name'];
-        $org_id = $model->get_org_id($org_name);
+        $org_id = $service->get_org_id($org_name);
         if (!$org_id) {
             return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
         }
         $response_arr = array_map(function ($org_name) {
             return ['relationship_type' => 'parent', 'org_name' => $org_name];
-        }, $model->get_parents($org_id));
+        }, $service->get_parents($org_id));
         array_push($response_arr, ...array_map(function ($org_name) {
             return ['relationship_type' => 'daughter', 'org_name' => $org_name];
-        }, $model->get_children($org_id)));
+        }, $service->get_children($org_id)));
         array_push($response_arr, ...array_map(function ($org_name) {
             return ['relationship_type' => 'sister', 'org_name' => $org_name];
-        }, $model->get_sisters($org_id)));
+        }, $service->get_sisters($org_id)));
         array_multisort($response_arr, SORT_ASC, $response_arr);
         usort($response_arr, self::sort_by_org_name(...));
         return rest_ensure_response($response_arr);
@@ -32,44 +32,57 @@ class OrganisationsController {
     }
 
     function delete($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
-        $model = new OrganisationsService();
+        $service = new OrganisationsService();
         $org_name = (string) $request['org_name'];
-        $org_id = $model->get_org_id($org_name);
+        $org_id = $service->get_org_id($org_name);
         if (!$org_id) {
             return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
         }
-        $model->remove_org($org_id);
+        $service->remove_org($org_id);
         return rest_ensure_response("Deletion Successful");
     }
 
     function put($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
-        $model = new OrganisationsService();
+        $service = new OrganisationsService();
         $org_name = (string) $request['org_name'];
-        $org_id = $model->get_org_id($org_name);
+        $org_id = $service->get_org_id($org_name);
         if (!$org_id) {
             return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
         }
-        $model->remove_relations($org_id);
+        $service->remove_relations($org_id);
+        $arr = $request->get_json_params();
+        foreach ($arr['daughters'] as $daughter) {
+            $daughter_id = $service->get_org_id($daughter);
+            if ($daughter_id) {
+                $service->add_relation($org_id, $daughter_id);
+            }
+        }
+        foreach ($arr['parents'] as $parent) {
+            $parent_id = $service->get_org_id($parent);
+            if ($parent_id) {
+                $service->add_relation($parent_id, $org_id);
+            }
+        }
         return rest_ensure_response("Edit Successful");
     }
 
     function post($request): void {
-        $model = new OrganisationsService();
-        self::add_orgs($request->get_json_params(), null, $model);
+        $service = new OrganisationsService();
+        self::add_orgs($request->get_json_params(), null, $service);
     }
 
-    function add_orgs($arr, $parent_id, $model): void {
+    function add_orgs($arr, $parent_id, $service): void {
         $org_name = $arr['org_name'];
-        $org_id = $model->get_org_id($org_name);
+        $org_id = $service->get_org_id($org_name);
         if (!$org_id) {
-            $org_id = $model->add_org($org_name);
+            $org_id = $service->add_org($org_name);
         }
         if ($parent_id) {
-            $model->add_relation($parent_id, $org_id);
+            $service->add_relation($parent_id, $org_id);
         }
         if (array_key_exists('daughters', $arr)) {
             foreach ($arr['daughters'] as $daughter_arr) {
-                self::add_orgs($daughter_arr, $org_id, $model);
+                self::add_orgs($daughter_arr, $org_id, $service);
             }
         }
     }
