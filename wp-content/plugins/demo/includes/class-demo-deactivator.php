@@ -1,12 +1,11 @@
 <?php
 namespace Demo;
+use Demo\Service\OrganisationsService;
+require_once DEMO_PLUGIN_DIR . 'services/class-demo-organisations-service.php';
 
 class DeActivator {
-    static function de_activate() {
-        global $wpdb;
-        $orgs_table = $wpdb->prefix . 'demo_organisations';
-        $relations_table = $wpdb->prefix . 'demo_relations';
-        $wpdb->query("DROP TABLE $relations_table");
-        $wpdb->query("DROP TABLE $orgs_table");
+    public function deactivate(): void {
+        $model = new OrganisationsService();
+        $model->drop_tables();
     }
 }
