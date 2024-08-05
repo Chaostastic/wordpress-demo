@@ -5,7 +5,7 @@ require_once DEMO_PLUGIN_DIR . 'controllers/class-demo-organisations-controller.
 use WP_REST_Server;
 
 class Routes {
-    public function register_routes(): void {
+    public function registerRoutes(): void {
         $controller = new OrganisationsController();
 
         register_rest_route('demo/v1', '/organisations', array(
