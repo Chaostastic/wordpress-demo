@@ -7,5 +7,6 @@ class DeActivator {
     public function deactivate(): void {
         $model = new OrganisationsService();
         $model->dropTables();
+        unregister_setting('general', 'demo_api_key');
     }
 }
