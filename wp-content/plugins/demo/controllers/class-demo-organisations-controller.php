@@ -4,17 +4,18 @@ use Demo\Model\Organisation;
 use Demo\Service\OrganisationsService;
 require_once DEMO_PLUGIN_DIR . 'models/class-demo-organisation.php';
 require_once DEMO_PLUGIN_DIR . 'services/class-demo-organisations-service.php';
+require_once DEMO_PLUGIN_DIR . 'controllers/class-demo-organisation-request-validator.php';
 use WP_Error;
 
 class OrganisationsController {
     public function get($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
-        if ($request->get_param('api_key') != get_option('demo_api_key')) {
-            return new WP_Error( 'invalid_api_key', esc_html__( 'API Key is incorrect'), array( 'status' => 403 ));
-        }
         $service = new OrganisationsService();
         $org = new Organisation($request['org_name'], $service);
-        if (!$org->getOrgId()) {
-            return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
+        $validator = new OrganisationRequestValidator();
+        $validator->validateAPIKey($request);
+        $validator->orgExists($org);
+        if ($validator->getError()->has_errors()) {
+            return $validator->getError();
         }
         $response_arr = array_map(function ($org_name) {
             return ['relationship_type' => 'parent', 'org_name' => $org_name];
@@ -44,13 +45,13 @@ class OrganisationsController {
     }
 
     public function delete($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
-        if ($request->get_param('api_key') != get_option('demo_api_key')) {
-            return new WP_Error( 'invalid_api_key', esc_html__( 'API Key is incorrect'), array( 'status' => 403 ));
-        }
         $service = new OrganisationsService();
         $org = new Organisation($request['org_name'], $service);
-        if (!$org->getOrgId()) {
-            return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
+        $validator = new OrganisationRequestValidator();
+        $validator->validateAPIKey($request);
+        $validator->orgExists($org);
+        if ($validator->getError()->has_errors()) {
+            return $validator->getError();
         }
         $service->removeOrg($org->getOrgId());
         return rest_ensure_response("Deletion Successful");
@@ -58,19 +59,15 @@ class OrganisationsController {
 
     public function put($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
         $arr = $request->get_json_params();
-        if ($arr['api_key'] != get_option('demo_api_key')) {
-            return new WP_Error( 'invalid_api_key', esc_html__( 'API Key is incorrect'), array( 'status' => 403 ));
-        }
-        if (!array_key_exists('daughters', $arr)) {
-            return new WP_Error( 'rest_invalid_json', esc_html__( 'Missing required field: daughters'), array( 'status' => 400 ));
-        }
-        if (!array_key_exists('parents', $arr)) {
-            return new WP_Error( 'rest_invalid_json', esc_html__( 'Missing required field: parents'), array( 'status' => 400 ));
-        }
         $service = new OrganisationsService();
         $org = new Organisation($request['org_name'], $service);
-        if (!$org->getOrgId()) {
-            return new WP_Error( 'organisation_not_found', esc_html__( 'This organisation does not exist.'), array( 'status' => 404 ));
+        $validator = new OrganisationRequestValidator();
+        $validator->validateAPIKey($request);
+        $validator->orgExists($org);
+        $validator->hasKey($arr, 'daughters');
+        $validator->hasKey($arr, 'parents');
+        if ($validator->getError()->has_errors()) {
+            return $validator->getError();
         }
         $service->removeRelations($org->getOrgId());
         foreach ($arr['daughters'] as $daughter) {
@@ -90,29 +87,15 @@ class OrganisationsController {
 
     public function post($request): WP_Error|\WP_REST_Response|\WP_HTTP_Response {
         $arr = $request->get_json_params();
-        if ($arr['api_key'] != get_option('demo_api_key')) {
-            return new WP_Error( 'invalid_api_key', esc_html__( 'API Key is incorrect'), array( 'status' => 403 ));
-        }
-        if (!$this->validateJSON($arr)) {
-            return new WP_Error( 'rest_invalid_json', esc_html__( 'Missing required field: org_name'), array( 'status' => 400 ));
+        $validator = new OrganisationRequestValidator();
+        $validator->validateAPIKey($request);
+        $validator->validateJSON($request);
+        if ($validator->getError()->has_errors()) {
+            return $validator->getError();
         }
         $service = new OrganisationsService();
         $this->addOrgs($arr, null, $service);
         return rest_ensure_response("Add Successful");
-    }
-
-    private function validateJSON($arr): bool {
-        if (!array_key_exists('org_name', $arr)) {
-            return false;
-        }
-        if (array_key_exists('daughters', $arr)) {
-            foreach ($arr['daughters'] as $daughter_arr) {
-                if (!$this::validateJSON($daughter_arr)) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     private function addOrgs($arr, $parent, $service): void {
