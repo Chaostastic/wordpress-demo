@@ -7,16 +7,23 @@ class FormPage {
             <label>
                 Name<br />
                 <input type="text" name="name"><br />
-            </label>
             <label>
                 Email<br />
-            <input type="email" name="email"><br />
+                <input type="email" name="email"><br />
             </label>
             <label>
                 Telephone<br />
-            <input type="tel" name="phone"><br />
+                <input type="tel" name="phone"><br />
             </label>
-            <button id="btn" type="submit">Submit</button>
+            <button type="submit">Submit</button>
         </form>
+        <script>
+            jQuery(document).ready(function($){
+                $("#demo_form").submit(function(event){
+                    alert('ok');
+                    event.preventDefault();
+                });
+            });
+        </script>
     <?php }
 }
