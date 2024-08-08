@@ -89,7 +89,7 @@ class OrganisationsController {
         $arr = $request->get_json_params();
         $validator = new OrganisationRequestValidator();
         $validator->validateAPIKey($request);
-        $validator->validateJSON($request);
+        $validator->validateJSON($arr);
         if ($validator->getError()->has_errors()) {
             return $validator->getError();
         }
