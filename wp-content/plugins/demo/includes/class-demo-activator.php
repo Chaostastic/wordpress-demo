@@ -1,11 +1,13 @@
 <?php
 namespace Demo;
 use Demo\Service\OrganisationsService;
+use Demo\Service\FormsService;
 require_once DEMO_PLUGIN_DIR . 'services/class-demo-organisations-service.php';
+require_once DEMO_PLUGIN_DIR . 'services/class-demo-forms-service.php';
 
 class Activator {
     public function activate(): void {
-        $model = new OrganisationsService();
-        $model->create_tables();
+        (new OrganisationsService())->createTables();
+        (new FormsService())->createTable();
     }
 }

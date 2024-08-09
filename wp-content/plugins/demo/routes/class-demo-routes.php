@@ -1,30 +1,13 @@
 <?php
 namespace Demo;
-use Demo\Controller\OrganisationsController;
-require_once DEMO_PLUGIN_DIR . 'controllers/class-demo-organisations-controller.php';
-use WP_REST_Server;
+use Demo\Routes\OrganisationsRoutes;
+use Demo\Routes\FormRoutes;
+require_once DEMO_PLUGIN_DIR . 'routes/class-demo-organisations-routes.php';
+require_once DEMO_PLUGIN_DIR . 'routes/class-demo-form-routes.php';
 
 class Routes {
-    public function register_routes(): void {
-        $controller = new OrganisationsController();
-
-        register_rest_route('demo/v1', '/organisations', array(
-            'methods'  => WP_REST_Server::CREATABLE,
-            'callback' => array($controller, 'post')
-        ));
-        register_rest_route('demo/v1', '/organisations/(?P<org_name>.+)', array(
-            array(
-                'methods'  => WP_REST_Server::READABLE,
-                'callback' => array($controller, 'get')
-            ),
-            array(
-                'methods'  => WP_REST_Server::DELETABLE,
-                'callback' => array($controller, 'delete')
-            ),
-            array(
-                'methods'  => 'PUT',
-                'callback' => array($controller, 'put')
-            )
-        ));
+    function registerRoutes(): void {
+        new OrganisationsRoutes();
+        new FormRoutes();
     }
 }
