@@ -19,4 +19,4 @@ register_activation_hook(__FILE__, array(new Demo\Activator(), 'activate'));
 register_deactivation_hook(__FILE__, array(new Demo\DeActivator(), 'deactivate'));
 add_action('rest_api_init', array(new Demo\Routes(), 'registerRoutes'));
 add_action( 'admin_init', array(new Demo\APIKeySetting(), 'init'));
-add_action('wp', array(new Demo\Pages(), 'load'));
+add_action('wp_footer', array(new Demo\Pages(), 'load'));

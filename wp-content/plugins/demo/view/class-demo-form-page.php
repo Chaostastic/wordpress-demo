@@ -1,12 +1,13 @@
 <?php
-namespace Demo;
+namespace Demo\Pages;
 
 class FormPage {
-    public function loadHtml() {?>
+    public function loadHtml(): void {?>
         <form id="demo_form">
             <label>
                 Name<br />
                 <input type="text" name="name"><br />
+            </label>
             <label>
                 Email<br />
                 <input type="email" name="email"><br />
@@ -18,12 +19,17 @@ class FormPage {
             <button type="submit">Submit</button>
         </form>
         <script>
-            jQuery(document).ready(function($){
+            (function($) {
                 $("#demo_form").submit(function(event){
-                    alert('ok');
                     event.preventDefault();
-                });
-            });
+                    let form = $(this);
+                    $.ajax({
+                        type: "POST",
+                        url: "<?php echo get_rest_url(null, 'demo/v1/form');?>",
+                        data: form.serialize()
+                    })
+                })
+            })(jQuery);
         </script>
     <?php }
 }
